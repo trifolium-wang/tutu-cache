@@ -36,5 +36,5 @@ public @interface TuCacheClear {
 
     boolean sync() default false;
 
-    // String condition() default "";
+    String condition() default "true";
 }

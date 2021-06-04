@@ -4,6 +4,7 @@ import co.tunan.tucache.core.aspect.TuCacheAspect;
 import org.springframework.core.annotation.AliasFor;
 
 import java.lang.annotation.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by wangxudong on 2020/04/09.
@@ -39,10 +40,17 @@ public @interface TuCache {
     String value() default "";
 
     /**
-     * 缓存超时时间，单位为 秒
+     * 缓存超时时间
      * Cache timeout time, in seconds
      */
     long expire() default -1;
+
+    /**
+     * 时间单位，默认为秒
+     *
+     * @return
+     */
+    TimeUnit timeUnit() default TimeUnit.SECONDS;
 
     @AliasFor("value")
     String key() default "";
@@ -52,9 +60,12 @@ public @interface TuCache {
      * 是否每次命中缓存则重置时间
      */
     boolean resetExpire() default false;
-//
-//    String condition() default "";
-//
-//    boolean resetExpire() default true;
+
+    /**
+     * 条件表达式
+     * 使用spEL表达式来告诉TuCache是否需要生效
+     * spEl表达式必须返回boolean
+     */
+    String condition() default "true";
 }
 

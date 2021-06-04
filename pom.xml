@@ -29,7 +29,7 @@
 
     <groupId>co.tunan.tucache</groupId>
     <artifactId>tutucache</artifactId>
-    <version>1.0.1.RELEASE</version>
+    <version>1.0.2.RELEASE</version>
     <modules>
         <module>tucache-core</module>
         <module>tucache-spring-boot-starter</module>

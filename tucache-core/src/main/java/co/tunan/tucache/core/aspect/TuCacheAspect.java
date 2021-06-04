@@ -2,6 +2,7 @@ package co.tunan.tucache.core.aspect;
 
 import co.tunan.tucache.core.annotation.TuCache;
 import co.tunan.tucache.core.annotation.TuCacheClear;
+import co.tunan.tucache.core.bean.TuConditionProcess;
 import co.tunan.tucache.core.bean.TuKeyGenerate;
 import co.tunan.tucache.core.bean.impl.DefaultTuKeyGenerate;
 import co.tunan.tucache.core.cache.TuCacheService;
@@ -58,13 +59,15 @@ public class TuCacheAspect implements DisposableBean {
             MethodSignature methodSignature = (MethodSignature) signature;
             Method method = methodSignature.getMethod();
             Class<?> returnType = method.getReturnType();
-            if (returnType.equals(void.class)) {
+            Object[] args = pjp.getArgs();
+            TuCache tuCache = method.getAnnotation(TuCache.class);
+
+            if (returnType.equals(void.class)
+                    || !new TuConditionProcess().accept(tuCache.condition(), targetObj, method, args)) {
 
                 return pjp.proceed();
             }
-            TuCache tuCache = method.getAnnotation(TuCache.class);
 
-            Object[] args = pjp.getArgs();
             String spElKey = StringUtils.isEmpty(tuCache.key()) ? tuCache.value() : tuCache.key();
 
             String cacheKey = tuKeyGenerate.generate(tuCacheProfiles, spElKey, targetObj, method, args);
@@ -75,7 +78,7 @@ public class TuCacheAspect implements DisposableBean {
             try {
                 if (tuCache.resetExpire()) {
                     // Get data and reset the expiration time
-                    cacheResult = tuCacheService.get(cacheKey, returnType, tuCache.expire());
+                    cacheResult = tuCacheService.get(cacheKey, returnType, tuCache.expire(), tuCache.timeUnit());
                 } else {
                     cacheResult = tuCacheService.get(cacheKey, returnType);
                 }
@@ -96,7 +99,7 @@ public class TuCacheAspect implements DisposableBean {
                         if (tuCache.expire() == -1) {
                             tuCacheService.set(cacheKey, cacheResult);
                         } else {
-                            tuCacheService.set(cacheKey, cacheResult, tuCache.expire());
+                            tuCacheService.set(cacheKey, cacheResult, tuCache.expire(), tuCache.timeUnit());
                         }
                     }
                 } catch (Exception e) {
@@ -122,6 +125,11 @@ public class TuCacheAspect implements DisposableBean {
             Method method = methodSignature.getMethod();
             TuCacheClear tuCacheClear = method.getAnnotation(TuCacheClear.class);
             Object[] args = pjp.getArgs();
+
+            if (!new TuConditionProcess().accept(tuCacheClear.condition(), targetObj, method, args)) {
+
+                return pjp.proceed();
+            }
 
             String[] key = tuCacheClear.key().length == 0 ? tuCacheClear.value() : tuCacheClear.key();
             String[] keys = tuCacheClear.keys();
@@ -190,11 +198,9 @@ public class TuCacheAspect implements DisposableBean {
         return threadPool;
     }
 
-    /**
-     * Implement the DisposableBean interface, cleanup static variables when the Context is closed.
-     */
+
     @Override
-    public void destroy() throws Exception {
+    public void destroy() {
 
         this.getThreadPool().shutdown();
 

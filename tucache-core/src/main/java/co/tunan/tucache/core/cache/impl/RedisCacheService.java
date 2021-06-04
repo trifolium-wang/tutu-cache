@@ -18,16 +18,16 @@ public class RedisCacheService implements TuCacheService {
     private static final long NOT_EXPIRE = -1;
 
     @Override
-    public void set(String key, Object value, long expire) {
+    public void set(String key, Object value, long expire, TimeUnit timeUnit) {
         redisTemplate.opsForValue().set(key, value);
         if (expire != NOT_EXPIRE) {
-            redisTemplate.expire(key, expire, TimeUnit.SECONDS);
+            redisTemplate.expire(key, expire, timeUnit);
         }
     }
 
     @Override
     public void set(String key, Object value) {
-        set(key, value, NOT_EXPIRE);
+        set(key, value, NOT_EXPIRE, null);
     }
 
     @Override
@@ -43,15 +43,15 @@ public class RedisCacheService implements TuCacheService {
 
     @Override
     public <T> T get(String key, Class<T> clazz) {
-        return get(key, clazz, NOT_EXPIRE);
+        return get(key, clazz, NOT_EXPIRE, null);
     }
 
     @Override
-    public <T> T get(String key, Class<T> clazz, long expire) {
+    public <T> T get(String key, Class<T> clazz, long expire, TimeUnit timeUnit) {
         Object value = redisTemplate.opsForValue().get(key);
 
         if (expire != NOT_EXPIRE) {
-            redisTemplate.expire(key, expire, TimeUnit.SECONDS);
+            redisTemplate.expire(key, expire, timeUnit);
         }
 
         if (value == null)
